@@ -63,7 +63,6 @@ export default function Home() {
     if (data) setBilhetes(data);
   };
 
-  // Upload de Imagem para o Supabase Storage
   const handleImageUpload = async (e) => {
     try {
       setUploading(true);
@@ -243,7 +242,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 font-sans">
       
-      {/* HEADER E MENU ADMINISTRATIVO COMPLETO */}
       <header className="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-50 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setAba('rifas')}>
@@ -256,7 +254,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Abas Administrativas (Visíveis em qualquer tela) */}
           <nav className="flex flex-wrap justify-center gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
             {[
               { id: 'rifas', label: 'Rifas & Vendas', icon: Ticket },
@@ -285,7 +282,6 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 pt-6">
 
-        {/* 1. ABA RIFAS E APROVAÇÕES */}
         {aba === 'rifas' && (
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl">
@@ -332,7 +328,6 @@ export default function Home() {
             {rifaSelecionada ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Grade de Bilhetes e Prémio */}
                 <div className="lg:col-span-2 space-y-6">
                   <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
                     <div className="flex flex-col md:flex-row gap-5 items-center border-b border-slate-800 pb-5 mb-5">
@@ -374,7 +369,6 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Grade Numerada */}
                     <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 max-h-[350px] overflow-y-auto p-3 bg-slate-950 rounded-2xl border border-slate-800">
                       {Array.from({ length: rifaSelecionada.total_cotas }).map((_, index) => {
                         const bilhete = bilhetes.find(b => b.numero === index);
@@ -397,7 +391,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Formulário de Reserva */}
                   {cotasSelecionadas.length > 0 && (
                     <div className="bg-slate-900 border-2 border-emerald-500/40 p-6 rounded-3xl shadow-2xl space-y-4">
                       <div className="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -419,7 +412,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Painel de Aprovação (Admin) */}
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 h-fit space-y-4 shadow-2xl">
                   <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                     <h3 className="font-extrabold text-white text-sm flex items-center space-x-2"><DollarSign className="w-4 h-4 text-emerald-400" /><span>Aprovações Pix</span></h3>
@@ -469,119 +461,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* 2. ABA CRIAR RIFA (COM UPLOAD DE FOTO) */}
         {aba === 'criar' && (
           <div className="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-5">
-            <h2 className="text-xl font-black text-white flex items-center space-x-2"><Plus className="text-emerald-400 w-5 h-5" /><span>Criar Nova Rifa</span></h2>
-            <form onSubmit={criarRifa} className="space-y-4">
-              <div>
-                <label className="text-xs text-slate-400 block mb-1">Título do Prémio</label>
-                <input type="text" placeholder="Ex: iPhone 15 Pro Max" value={novaRifa.titulo} onChange={e => setNovaRifa({...novaRifa, titulo: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-xs outline-none" />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400 block mb-1">Descrição</label>
-                <textarea placeholder="Detalhes da rifa..." value={novaRifa.descricao} onChange={e => setNovaRifa({...novaRifa, descricao: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-xs outline-none h-20 resize-none" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Preço por Cota (R$)</label>
-                  <input type="number" step="0.01" placeholder="10.00" value={novaRifa.preco_cota} onChange={e => setNovaRifa({...novaRifa, preco_cota: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-xs outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Total de Cotas</label>
-                  <select value={novaRifa.total_cotas} onChange={e => setNovaRifa({...novaRifa, total_cotas: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-xs outline-none">
-                    <option value={100}>100 Cotas</option>
-                    <option value={1000}>1.000 Cotas</option>
-                    <option value={10000}>10.000 Cotas</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* UPLOAD DE FOTO DIRETO */}
-              <div>
-                <label className="text-xs text-slate-400 block mb-1">Foto da Capa da Rifa (Upload direto)</label>
-                <div className="flex items-center space-x-3">
-                  <label className="flex-1 cursor-pointer bg-slate-950 border border-dashed border-slate-700 hover:border-emerald-500 rounded-xl px-4 py-3 text-center text-xs text-slate-300 transition flex items-center justify-center space-x-2">
-                    <Upload className="w-4 h-4 text-emerald-400" />
-                    <span>{uploading ? 'Enviando foto...' : 'Escolher foto do celular/PC'}</span>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
-                  </label>
-                </div>
-                {novaRifa.imagem_url && (
-                  <p className="text-[10px] text-emerald-400 mt-1 truncate">✔ Imagem carregada com sucesso!</p>
-                )}
-              </div>
-
-              <button type="submit" disabled={loading || uploading} className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 rounded-xl transition text-sm">
-                Publicar Rifa
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* 3. ABA AFILIADOS */}
-        {aba === 'afiliados' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 h-fit space-y-4 shadow-2xl">
-              <h3 className="font-extrabold text-white text-sm flex items-center space-x-2"><Users className="text-emerald-400 w-4 h-4" /><span>Novo Afiliado</span></h3>
-              <form onSubmit={criarAfiliado} className="space-y-3">
-                <input type="text" placeholder="Nome" value={novoAfiliado.nome} onChange={e => setNovoAfiliado({...novoAfiliado, nome: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none" />
-                <input type="text" placeholder="Código (ex: pedro10)" value={novoAfiliado.codigo} onChange={e => setNovoAfiliado({...novoAfiliado, codigo: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none" />
-                <input type="number" placeholder="Comissão (%)" value={novoAfiliado.comissao_porcentagem} onChange={e => setNovoAfiliado({...novoAfiliado, comissao_porcentagem: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none" />
-                <input type="text" placeholder="Chave Pix" value={novoAfiliado.pix_chave} onChange={e => setNovoAfiliado({...novoAfiliado, pix_chave: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none" />
-                <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 rounded-xl transition text-xs">Cadastrar Afiliado</button>
-              </form>
-            </div>
-            <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
-              <h3 className="font-extrabold text-white text-sm mb-4">Afiliados Ativos</h3>
-              <div className="space-y-3">
-                {afiliados.length === 0 ? <p className="text-slate-500 text-xs">Nenhum afiliado cadastrado.</p> : afiliados.map(a => (
-                  <div key={a.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-white text-xs">{a.nome}</h4>
-                      <p className="text-[10px] text-slate-400">Código: <span className="text-emerald-400 font-mono font-bold">?ref={a.codigo}</span> | Comissão: {a.comissao_porcentagem}%</p>
-                    </div>
-                    <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/?ref=${a.codigo}`); alert('Link do afiliado copiado!'); }} className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5">
-                      <Share2 className="w-3.5 h-3.5 text-emerald-400" /><span>Copiar Link</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 4. ABA SORTEIOS */}
-        {aba === 'sorteio' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
-              <h3 className="font-extrabold text-base text-white flex items-center space-x-2"><Trophy className="text-amber-400 w-5 h-5" /><span>Loteria Federal</span></h3>
-              <p className="text-xs text-slate-400">Insira o 1º prêmio da Caixa para calcular o bilhete premiado.</p>
-              <input type="number" placeholder="Ex: 85432" value={numFederal} onChange={e => setNumFederal(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-lg font-mono text-center outline-none" />
-              <button onClick={calcularFederal} className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl transition text-xs">Apurar Ganhador</button>
-              {ganhadorFederal && (
-                <div className="bg-slate-950 p-5 rounded-2xl border border-amber-500/40 text-center space-y-1">
-                  <span className="text-[10px] text-amber-400 font-extrabold uppercase">Bilhete Premiado</span>
-                  <span className="text-3xl font-mono font-black text-white">#{ganhadorFederal.numero.toString().padStart(3, '0')}</span>
-                  <p className="text-sm text-slate-200 font-bold">{ganhadorFederal.comprador}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
-              <h3 className="font-extrabold text-base text-white flex items-center space-x-2"><Shuffle className="text-emerald-400 w-5 h-5" /><span>Roleta Ao Vivo</span></h3>
-              <p className="text-xs text-slate-400">Sortear entre todos os bilhetes pagos.</p>
-              <div className="py-6 bg-slate-950 rounded-2xl border border-slate-800 text-center">
-                {ganhadorRoleta ? (
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-emerald-400 font-bold uppercase">Ganhador Sorteado</span>
-                    <h4 className="text-4xl font-mono font-black text-white">#{ganhadorRoleta.numero.toString().padStart(3, '0')}</h4>
-                    <p className="text-base font-bold text-emerald-400">{ganhadorRoleta.comprador_nome}</p>
-                  </div>
-                ) : (
-                  <Sparkles className="w-8 h-8 text-emerald-400 mx-auto animate-pulse" />
-                )}
-              </div>
-              <button onClick={
+            <h2 className="text-xl font-black text-white flex items-center space-x-2"><Plus className="text-emerald-400 w-5 h-
