@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { 
@@ -68,18 +67,11 @@ export default function Home() {
       setUploading(true);
       const file = e.target.files[0];
       if (!file) return;
-
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('rifas')
-        .upload(filePath, file);
-
+      const { error: uploadError } = await supabase.storage.from('rifas').upload(fileName, file);
       if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from('rifas').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('rifas').getPublicUrl(fileName);
       setNovaRifa({ ...novaRifa, imagem_url: data.publicUrl });
       alert('Foto enviada com sucesso!');
     } catch (error) {
@@ -92,7 +84,6 @@ export default function Home() {
   const criarRifa = async (e) => {
     e.preventDefault();
     if (!novaRifa.titulo || !novaRifa.preco_cota) return alert('Preencha os campos obrigatórios!');
-
     setLoading(true);
     const { data, error } = await supabase.from('rifas').insert([{
       titulo: novaRifa.titulo,
@@ -131,7 +122,6 @@ export default function Home() {
   const criarAfiliado = async (e) => {
     e.preventDefault();
     if (!novoAfiliado.nome || !novoAfiliado.codigo) return alert('Preencha nome e código!');
-
     const { error } = await supabase.from('afiliados').insert([{
       nome: novoAfiliado.nome,
       codigo: novoAfiliado.codigo.toLowerCase().trim(),
@@ -185,7 +175,7 @@ export default function Home() {
     if (error) {
       alert('Erro ao reservar: ' + error.message);
     } else {
-      alert('Cotas reservadas com sucesso! Aguardando pagamento.');
+      alert('Cotas reservadas com sucesso!');
       setCotasSelecionadas([]);
       setComprador({ nome: '', whatsapp: '', afiliado: '' });
       carregarBilhetes(rifaSelecionada.id);
@@ -241,7 +231,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 font-sans">
-      
       <header className="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-50 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setAba('rifas')}>
@@ -281,7 +270,6 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 pt-6">
-
         {aba === 'rifas' && (
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl">
@@ -295,172 +283,4 @@ export default function Home() {
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-bold outline-none text-sm"
                   >
                     {rifas.map(r => (
-                      <option key={r.id} value={r.id}>{r.titulo} (R$ {r.preco_cota.toFixed(2)})</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {rifaSelecionada && (
-                <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
-                  <button 
-                    onClick={() => {
-                      const link = `${window.location.origin}`;
-                      navigator.clipboard.writeText(link);
-                      alert('Link da rifa copiado para divulgação!');
-                    }}
-                    className="flex items-center space-x-1.5 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 px-4 py-2.5 rounded-xl transition text-xs font-bold border border-emerald-500/20"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>Copiar Link de Divulgação</span>
-                  </button>
-                  <button 
-                    onClick={() => deletarRifa(rifaSelecionada.id)}
-                    className="flex items-center space-x-1.5 text-red-400 bg-red-500/10 hover:bg-red-600 hover:text-white px-4 py-2.5 rounded-xl transition text-xs font-bold border border-red-500/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Excluir</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {rifaSelecionada ? (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
-                    <div className="flex flex-col md:flex-row gap-5 items-center border-b border-slate-800 pb-5 mb-5">
-                      <img src={rifaSelecionada.imagem_url} alt="" className="w-full md:w-36 h-32 object-cover rounded-2xl border border-slate-700 shadow-md" />
-                      <div className="flex-1 space-y-1.5 text-center md:text-left">
-                        <span className="px-3 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/20">Ativa</span>
-                        <h2 className="text-xl font-black text-white">{rifaSelecionada.titulo}</h2>
-                        <p className="text-slate-400 text-xs">{rifaSelecionada.descricao}</p>
-                        <div className="pt-1 flex gap-4 justify-center md:justify-start">
-                          <div><span className="text-[10px] text-slate-500 block">Cota</span><span className="text-base font-black text-emerald-400">R$ {rifaSelecionada.preco_cota.toFixed(2)}</span></div>
-                          <div className="border-l border-slate-800 pl-4"><span className="text-[10px] text-slate-500 block">Total</span><span className="text-sm font-bold text-slate-200">{rifaSelecionada.total_cotas} Cotas</span></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5 mb-5 bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                      <div className="flex justify-between text-xs font-bold">
-                        <span className="text-slate-400">Progresso de Vendas</span>
-                        <span className="text-emerald-400">{progresso}% ({totalPagos + totalReservados}/{rifaSelecionada.total_cotas})</span>
-                      </div>
-                      <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                        <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${progresso}%` }}></div>
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <span className="text-xs text-slate-400 block mb-2 font-semibold">⚡ Seleção Rápida:</span>
-                      <div className="flex flex-wrap gap-2">
-                        {[5, 10, 20, 50].map((qtd) => (
-                          <button key={qtd} onClick={() => adicionarLote(qtd)} className="bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 font-bold px-3 py-1.5 rounded-xl text-xs transition">
-                            +{qtd}
-                          </button>
-                        ))}
-                        {cotasSelecionadas.length > 0 && (
-                          <button onClick={() => setCotasSelecionadas([])} className="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl text-xs font-semibold ml-auto">
-                            Limpar ({cotasSelecionadas.length})
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 max-h-[350px] overflow-y-auto p-3 bg-slate-950 rounded-2xl border border-slate-800">
-                      {Array.from({ length: rifaSelecionada.total_cotas }).map((_, index) => {
-                        const bilhete = bilhetes.find(b => b.numero === index);
-                        let bg = 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800';
-                        if (bilhete?.status === 'pago') bg = 'bg-emerald-500 text-slate-950 font-black';
-                        else if (bilhete?.status === 'reservado') bg = 'bg-amber-500 text-slate-950 font-black';
-                        else if (cotasSelecionadas.includes(index)) bg = 'bg-blue-600 text-white font-black scale-105 ring-2 ring-blue-400';
-
-                        return (
-                          <button
-                            key={index}
-                            disabled={bilhete?.status === 'pago' || bilhete?.status === 'reservado'}
-                            onClick={() => selecionarCota(index)}
-                            className={`h-10 rounded-xl flex items-center justify-center text-xs font-mono transition border ${bg}`}
-                          >
-                            {index.toString().padStart(3, '0')}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {cotasSelecionadas.length > 0 && (
-                    <div className="bg-slate-900 border-2 border-emerald-500/40 p-6 rounded-3xl shadow-2xl space-y-4">
-                      <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                        <h3 className="font-extrabold text-white text-sm">Reservar ({cotasSelecionadas.length} cotas)</h3>
-                        <span className="text-lg font-black text-emerald-400">R$ {(cotasSelecionadas.length * rifaSelecionada.preco_cota).toFixed(2)}</span>
-                      </div>
-                      <form onSubmit={realizarReserva} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <input type="text" placeholder="Nome Completo" value={comprador.nome} onChange={e => setComprador({...comprador, nome: e.target.value})} className="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none focus:border-emerald-500" />
-                        <input type="text" placeholder="WhatsApp (com DDD)" value={comprador.whatsapp} onChange={e => setComprador({...comprador, whatsapp: e.target.value})} className="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none focus:border-emerald-500" />
-                        <select value={comprador.afiliado} onChange={e => setComprador({...comprador, afiliado: e.target.value})} className="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-xs outline-none">
-                          <option value="">Sem Afiliado</option>
-                          {afiliados.map(a => <option key={a.id} value={a.codigo}>{a.nome} ({a.codigo})</option>)}
-                        </select>
-                        <button type="submit" disabled={loading} className="sm:col-span-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl transition text-sm">
-                          Confirmar Reserva de Bilhetes
-                        </button>
-                      </form>
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 h-fit space-y-4 shadow-2xl">
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                    <h3 className="font-extrabold text-white text-sm flex items-center space-x-2"><DollarSign className="w-4 h-4 text-emerald-400" /><span>Aprovações Pix</span></h3>
-                    <span className="text-xs bg-slate-800 px-2.5 py-0.5 rounded-full font-bold">{bilhetes.length}</span>
-                  </div>
-                  <div className="space-y-2.5 max-h-[500px] overflow-y-auto">
-                    {bilhetes.length === 0 ? (
-                      <p className="text-slate-500 text-xs text-center py-6">Nenhum pedido registrado.</p>
-                    ) : (
-                      bilhetes.map(b => (
-                        <div key={b.id} className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <span className="font-mono font-black text-emerald-400 text-xs">#{b.numero.toString().padStart(3, '0')}</span>
-                              <span className="text-xs font-bold text-white">{b.comprador_nome}</span>
-                            </div>
-                            <span className="text-[10px] text-slate-400 block">{b.comprador_whatsapp}</span>
-                            {b.afiliado_codigo && <span className="text-[9px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full mt-0.5 inline-block">Afiliado: {b.afiliado_codigo}</span>}
-                          </div>
-                          <div className="flex space-x-1">
-                            {b.status === 'reservado' ? (
-                              <button onClick={() => atualizarStatusCota(b.id, 'pago')} className="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 p-2 rounded-xl transition" title="Aprovar">
-                                <CheckCircle className="w-4 h-4" />
-                              </button>
-                            ) : (
-                              <button onClick={() => atualizarStatusCota(b.id, 'reservado')} className="bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-slate-950 p-2 rounded-xl transition" title="Voltar">
-                                <RefreshCw className="w-4 h-4" />
-                              </button>
-                            )}
-                            <button onClick={() => enviarWhatsApp(b)} className="bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-slate-950 p-2 rounded-xl transition" title="WhatsApp">
-                              <Send className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-              </div>
-            ) : (
-              <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-3xl">
-                <p className="text-slate-400 mb-3 text-sm">Nenhuma rifa cadastrada no momento.</p>
-                <button onClick={() => setAba('criar')} className="bg-emerald-500 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs">Criar Primeira Rifa</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {aba === 'criar' && (
-          <div className="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-5">
-            <h2 className="text-xl font-black text-white flex items-center space-x-2"><Plus className="text-emerald-400 w-5 h-
+                      <option key={r.id} value
