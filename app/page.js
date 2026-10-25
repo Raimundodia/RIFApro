@@ -17,7 +17,6 @@ export default function Home() {
   const [afiliados, setAfiliados] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Formulário Nova Rifa
   const [novaRifa, setNovaRifa] = useState({
     titulo: '',
     descricao: '',
@@ -26,7 +25,6 @@ export default function Home() {
     imagem_url: ''
   });
 
-  // Formulário Novo Afiliado
   const [novoAfiliado, setNovoAfiliado] = useState({
     nome: '',
     codigo: '',
@@ -34,11 +32,9 @@ export default function Home() {
     pix_chave: ''
   });
 
-  // Formulário Compra
   const [cotasSelecionadas, setCotasSelecionadas] = useState([]);
   const [comprador, setComprador] = useState({ nome: '', whatsapp: '', afiliado: '' });
 
-  // Sorteio
   const [numFederal, setNumFederal] = useState('');
   const [ganhadorFederal, setGanhadorFederal] = useState(null);
   const [ganhadorRoleta, setGanhadorRoleta] = useState(null);
@@ -392,3 +388,333 @@ export default function Home() {
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-bold text-slate-300">Escolha seus números da sorte:</span>
                         <div className="flex items-center space-x-4 text-xs font-medium">
+                          <div className="flex items-center space-x-1.5"><div className="w-3 h-3 bg-slate-900 border border-slate-800 rounded-sm"></div><span className="text-slate-400">Livre</span></div>
+                          <div className="flex items-center space-x-1.5"><div className="w-3 h-3 bg-amber-500 rounded-sm"></div><span className="text-slate-400">Reservado</span></div>
+                          <div className="flex items-center space-x-1.5"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div><span className="text-slate-400">Pago</span></div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 max-h-[380px] overflow-y-auto p-3 bg-slate-950 rounded-2xl border border-slate-800 shadow-inner">
+                        {Array.from({ length: rifaSelecionada.total_cotas }).map((_, index) => {
+                          const num = index;
+                          const bilhete = bilhetes.find(b => b.numero === num);
+                          let bg = 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:border-slate-600';
+                          
+                          if (bilhete?.status === 'pago') bg = 'bg-emerald-500 border-emerald-400 text-slate-950 font-black shadow-md shadow-emerald-500/20';
+                          else if (bilhete?.status === 'reservado') bg = 'bg-amber-500 border-amber-400 text-slate-950 font-black shadow-md';
+                          else if (cotasSelecionadas.includes(num)) bg = 'bg-gradient-to-tr from-blue-600 to-indigo-500 border-white text-white font-black scale-105 shadow-lg ring-2 ring-blue-400/50';
+
+                          return (
+                            <button
+                              key={num}
+                              disabled={bilhete?.status === 'pago' || bilhete?.status === 'reservado'}
+                              onClick={() => selecionarCota(num)}
+                              className={`h-11 rounded-xl flex items-center justify-center text-xs font-mono transition-all duration-200 border ${bg}`}
+                            >
+                              {num.toString().padStart(3, '0')}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {cotasSelecionadas.length > 0 && (
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-emerald-500/40 p-6 md:p-8 rounded-3xl shadow-2xl space-y-6">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-emerald-500 p-2.5 rounded-xl text-slate-950 font-bold shadow-lg">
+                            <Ticket className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-lg text-white">Finalizar Reserva</h3>
+                            <p className="text-xs text-emerald-400 font-semibold">{cotasSelecionadas.length} cota(s) selecionada(s)</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-slate-400 block">Total a Pagar</span>
+                          <span className="text-2xl font-black text-emerald-400">R$ {(cotasSelecionadas.length * rifaSelecionada.preco_cota).toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <form onSubmit={realizarReserva} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="text-xs font-semibold text-slate-400 block mb-1">Seu Nome Completo</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: João da Silva"
+                            value={comprador.nome}
+                            onChange={e => setComprador({...comprador, nome: e.target.value})}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-400 block mb-1">WhatsApp com DDD</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: 86999999999"
+                            value={comprador.whatsapp}
+                            onChange={e => setComprador({...comprador, whatsapp: e.target.value})}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-400 block mb-1">Cupom / Afiliado (Opcional)</label>
+                          <select
+                            value={comprador.afiliado}
+                            onChange={e => setComprador({...comprador, afiliado: e.target.value})}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500"
+                          >
+                            <option value="">Venda Direta</option>
+                            {afiliados.map(a => (
+                              <option key={a.id} value={a.codigo}>{a.nome} ({a.codigo})</option>
+                            ))}
+                          </select>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="sm:col-span-3 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black py-4 rounded-2xl transition-all shadow-xl shadow-emerald-500/20 text-base flex items-center justify-center space-x-2"
+                        >
+                          <span>Gerar Pedido & Reservar Bilhetes</span>
+                          <ArrowRight className="w-5 h-5" />
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 h-fit space-y-4 shadow-2xl backdrop-blur">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <h3 className="font-extrabold text-base text-white flex items-center space-x-2">
+                      <DollarSign className="w-5 h-5 text-emerald-400" />
+                      <span>Painel de Aprovações</span>
+                    </h3>
+                    <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-bold">{bilhetes.length} pedidos</span>
+                  </div>
+
+                  <div className="space-y-3 max-h-[550px] overflow-y-auto pr-1">
+                    {bilhetes.length === 0 ? (
+                      <div className="text-center py-12 text-slate-500 text-sm">
+                        <AlertCircle className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                        Nenhum bilhete reservado nesta campanha.
+                      </div>
+                    ) : (
+                      bilhetes.map(b => (
+                        <div key={b.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 hover:border-slate-700 transition flex items-center justify-between shadow-inner">
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono font-black text-emerald-400 text-base">#{b.numero.toString().padStart(3, '0')}</span>
+                              <span className="text-sm font-bold text-white truncate max-w-[120px]">{b.comprador_nome}</span>
+                            </div>
+                            <span className="text-xs text-slate-400 block mt-0.5">{b.comprador_whatsapp}</span>
+                            {b.afiliado_codigo && (
+                              <span className="inline-block mt-1 text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">
+                                Afiliado: {b.afiliado_codigo}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center space-x-1.5">
+                            {b.status === 'reservado' ? (
+                              <button 
+                                onClick={() => atualizarStatusCota(b.id, 'pago')}
+                                className="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 p-2.5 rounded-xl transition font-bold shadow"
+                                title="Aprovar Pagamento Pix"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => atualizarStatusCota(b.id, 'reservado')}
+                                className="bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-slate-950 p-2.5 rounded-xl transition font-bold shadow"
+                                title="Voltar para Reservado"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            <button 
+                              onClick={() => enviarWhatsApp(b)}
+                              className="bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-slate-950 p-2.5 rounded-xl transition font-bold shadow"
+                              title="Enviar Comprovante no WhatsApp"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-3xl shadow-xl">
+                <AlertCircle className="w-14 h-14 text-slate-500 mx-auto mb-4 opacity-60" />
+                <h3 className="text-xl font-bold text-white mb-2">Nenhuma rifa cadastrada</h3>
+                <p className="text-slate-400 text-sm mb-6">Clique no botão abaixo para criar a sua primeira campanha de sucesso!</p>
+                <button 
+                  onClick={() => setAba('criar')}
+                  className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-3 rounded-xl transition shadow-lg shadow-emerald-500/20"
+                >
+                  Criar Minha Primeira Rifa
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {aba === 'criar' && (
+          <div className="max-w-2xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <div className="flex items-center space-x-3 border-b border-slate-800 pb-4">
+              <div className="bg-emerald-500 p-3 rounded-2xl text-slate-950">
+                <Plus className="w-6 h-6 font-bold" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-white">Criar Nova Campanha</h2>
+                <p className="text-xs text-slate-400">Configure os prêmios e o total de números</p>
+              </div>
+            </div>
+
+            <form onSubmit={criarRifa} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Título do Prêmio</label>
+                <input
+                  type="text"
+                  placeholder="Ex: iPhone 15 Pro Max ou R$ 5.000 no Pix"
+                  value={novaRifa.titulo}
+                  onChange={e => setNovaRifa({...novaRifa, titulo: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3.5 text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Descrição Detalhada</label>
+                <textarea
+                  placeholder="Regulamento, data do sorteio, etc..."
+                  value={novaRifa.descricao}
+                  onChange={e => setNovaRifa({...novaRifa, descricao: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3.5 text-white outline-none focus:border-emerald-500 h-28 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-400 block mb-1">Preço por Cota (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="10.00"
+                    value={novaRifa.preco_cota}
+                    onChange={e => setNovaRifa({...novaRifa, preco_cota: e.target.value})}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3.5 text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-400 block mb-1">Total de Cotas</label>
+                  <select
+                    value={novaRifa.total_cotas}
+                    onChange={e => setNovaRifa({...novaRifa, total_cotas: e.target.value})}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3.5 text-white outline-none focus:border-emerald-500"
+                  >
+                    <option value={100}>100 Cotas (00 a 99)</option>
+                    <option value={1000}>1.000 Cotas (000 a 999)</option>
+                    <option value={10000}>10.000 Cotas (0000 a 9999)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Link da Imagem do Prêmio (URL)</label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/photo-..."
+                  value={novaRifa.imagem_url}
+                  onChange={e => setNovaRifa({...novaRifa, imagem_url: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3.5 text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black py-4 rounded-2xl transition shadow-xl shadow-emerald-500/20 text-base mt-2"
+              >
+                Cadastrar e Publicar Campanha
+              </button>
+            </form>
+          </div>
+        )}
+
+        {aba === 'afiliados' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 h-fit space-y-4 shadow-2xl">
+              <h3 className="font-extrabold text-lg text-white flex items-center space-x-2">
+                <Users className="w-5 h-5 text-emerald-400" />
+                <span>Novo Afiliado</span>
+              </h3>
+              <form onSubmit={criarAfiliado} className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Nome do Afiliado"
+                  value={novoAfiliado.nome}
+                  onChange={e => setNovoAfiliado({...novoAfiliado, nome: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Código Ex: pedro10"
+                  value={novoAfiliado.codigo}
+                  onChange={e => setNovoAfiliado({...novoAfiliado, codigo: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500"
+                />
+                <input
+                  type="number"
+                  placeholder="Comissão (%)"
+                  value={novoAfiliado.comissao_porcentagem}
+                  onChange={e => setNovoAfiliado({...novoAfiliado, comissao_porcentagem: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Chave Pix para Pagamento"
+                  value={novoAfiliado.pix_chave}
+                  onChange={e => setNovoAfiliado({...novoAfiliado, pix_chave: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl transition shadow-lg shadow-emerald-500/20 text-sm"
+                >
+                  Cadastrar Afiliado
+                </button>
+              </form>
+            </div>
+
+            <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+              <h3 className="font-extrabold text-lg text-white mb-4">Afiliados Ativos</h3>
+              <div className="space-y-3">
+                {afiliados.length === 0 ? (
+                  <p className="text-slate-500 text-sm">Nenhum afiliado cadastrado ainda.</p>
+                ) : (
+                  afiliados.map(a => (
+                    <div key={a.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between shadow-inner">
+                      <div>
+                        <h4 className="font-bold text-white text-base">{a.nome}</h4>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Link/Código: <span className="text-emerald-400 font-mono font-bold">?ref={a.codigo}</span> | Comissão: <span className="text-amber-400 font-bold">{a.comissao_porcentagem}%</span>
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">Pix: {a.pix_chave || 'Não informada'}</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const url = `${window.location.origin}/?ref=${a.codigo}`;
+                          navigator.clipboard.writeText(url);
+                          alert('Link de afiliado copiado!');
+                        }}
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2.5 rounded-xl transition text-xs font-semibold flex items-center space-x-1.5"
+                      >
+                        <Share2 className="w-4
