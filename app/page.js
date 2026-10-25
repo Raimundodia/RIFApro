@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { 
   Plus, Ticket, Users, Trophy, DollarSign, CheckCircle, 
   Trash2, Send, Shuffle, Sparkles, AlertCircle, RefreshCw, 
-  ShieldCheck, Share2, Flame, Award, ArrowRight
+  ShieldCheck, Share2, Flame, ArrowRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -147,6 +147,7 @@ export default function Home() {
   };
 
   const adicionarLote = (qtd) => {
+    if (!rifaSelecionada) return;
     const livres = [];
     for (let i = 0; i < rifaSelecionada.total_cotas; i++) {
       const ocupado = bilhetes.some(b => b.numero === i);
@@ -174,7 +175,7 @@ export default function Home() {
     const { error } = await supabase.from('bilhetes').insert(registros);
 
     if (error) {
-      alert('Erro ao reservar cotas (alguma pode já ter sido escolhida): ' + error.message);
+      alert('Erro ao reservar cotas: ' + error.message);
     } else {
       alert('Cotas reservadas! Realize o pagamento via Pix para confirmar.');
       setCotasSelecionadas([]);
@@ -186,12 +187,13 @@ export default function Home() {
 
   const atualizarStatusCota = async (bilheteId, novoStatus) => {
     const { error } = await supabase.from('bilhetes').update({ status: novoStatus }).eq('id', bilheteId);
-    if (!error) {
+    if (!error && rifaSelecionada) {
       carregarBilhetes(rifaSelecionada.id);
     }
   };
 
   const enviarWhatsApp = (bilhete) => {
+    if (!rifaSelecionada) return;
     const texto = `Olá *${bilhete.comprador_nome}*! 🚀\n\nRecebemos a confirmação do seu bilhete na rifa *${rifaSelecionada.titulo}*!\n\n🎟️ Número: *#${bilhete.numero.toString().padStart(3, '0')}*\nStatus: *${bilhete.status.toUpperCase()}*\n\nBoa sorte no sorteio! 🍀`;
     const numLimpo = bilhete.comprador_whatsapp.replace(/\D/g, '');
     window.open(`https://wa.me/55${numLimpo}?text=${encodeURIComponent(texto)}`, '_blank');
@@ -230,7 +232,6 @@ export default function Home() {
     }, 80);
   };
 
-  // Estatísticas da rifa ativa
   const totalPagos = bilhetes.filter(b => b.status === 'pago').length;
   const totalReservados = bilhetes.filter(b => b.status === 'reservado').length;
   const progresso = rifaSelecionada ? Math.round(((totalPagos + totalReservados) / rifaSelecionada.total_cotas) * 100) : 0;
@@ -238,7 +239,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16 selection:bg-emerald-500 selection:text-slate-950 font-sans">
       
-      {/* Top Banner / Header Profissional */}
       <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setAba('rifas')}>
@@ -253,7 +253,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Navegação Moderna */}
           <nav className="flex space-x-1.5 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
             {[
               { id: 'rifas', label: 'Rifas Ativas', icon: Ticket },
@@ -267,4 +266,129 @@ export default function Home() {
                 <button
                   key={tab.id}
                   onClick={() => setAba(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl
+                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                    ativo 
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 pt-8">
+
+        {aba === 'rifas' && (
+          <div className="space-y-8 animate-fadeIn">
+            
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900/80 p-6 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+              
+              <div className="flex items-center space-x-4 w-full md:w-auto">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl text-emerald-400">
+                  <Flame className="w-6 h-6" />
+                </div>
+                <div className="w-full md:w-80">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Campanha Selecionada</label>
+                  <select 
+                    value={rifaSelecionada?.id || ''} 
+                    onChange={(e) => setRifaSelecionada(rifas.find(r => r.id === e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3 text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner"
+                  >
+                    {rifas.map(r => (
+                      <option key={r.id} value={r.id}>{r.titulo} — (R$ {r.preco_cota.toFixed(2)})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {rifaSelecionada && (
+                <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
+                  <button 
+                    onClick={() => deletarRifa(rifaSelecionada.id)}
+                    className="flex items-center space-x-2 text-red-400 hover:text-white bg-red-500/10 hover:bg-red-600 border border-red-500/20 px-4 py-3 rounded-xl transition-all font-semibold text-sm shadow"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Excluir Campanha</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {rifaSelecionada ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden backdrop-blur">
+                    
+                    <div className="flex flex-col md:flex-row gap-6 items-center border-b border-slate-800/80 pb-6 mb-6">
+                      <img 
+                        src={rifaSelecionada.imagem_url} 
+                        alt={rifaSelecionada.titulo} 
+                        className="w-full md:w-44 h-36 object-cover rounded-2xl border border-slate-700/80 shadow-md"
+                      />
+                      <div className="flex-1 space-y-2 text-center md:text-left">
+                        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Sorteio Garantido & Seguro</span>
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-black text-white">{rifaSelecionada.titulo}</h2>
+                        <p className="text-slate-400 text-sm">{rifaSelecionada.descricao}</p>
+                        <div className="pt-2 flex flex-wrap gap-4 justify-center md:justify-start items-center">
+                          <div>
+                            <span className="text-xs text-slate-500 block">Valor por cota</span>
+                            <span className="text-xl font-black text-emerald-400">R$ {rifaSelecionada.preco_cota.toFixed(2)}</span>
+                          </div>
+                          <div className="border-l border-slate-800 pl-4">
+                            <span className="text-xs text-slate-500 block">Total de Cotas</span>
+                            <span className="text-lg font-bold text-slate-200">{rifaSelecionada.total_cotas} Números</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-6 bg-slate-950 p-4 rounded-2xl border border-slate-800/60">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-slate-400">Progresso da Venda</span>
+                        <span className="text-emerald-400">{progresso}% Vendido ({totalPagos + totalReservados}/{rifaSelecionada.total_cotas})</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-3 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div 
+                          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500 shadow-lg shadow-emerald-500/50"
+                          style={{ width: `${progresso}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <span className="text-xs font-semibold text-slate-400 block mb-2">⚡ Compra Rápida de Cotas:</span>
+                      <div className="flex flex-wrap gap-2">
+                        {[5, 10, 20, 50].map((qtd) => (
+                          <button
+                            key={qtd}
+                            onClick={() => adicionarLote(qtd)}
+                            className="bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 font-bold px-4 py-2 rounded-xl text-xs transition border border-slate-700/80 shadow"
+                          >
+                            +{qtd} Cotas
+                          </button>
+                        ))}
+                        {cotasSelecionadas.length > 0 && (
+                          <button
+                            onClick={() => setCotasSelecionadas([])}
+                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-2 rounded-xl text-xs font-semibold transition border border-red-500/20 ml-auto"
+                          >
+                            Limpar Seleção ({cotasSelecionadas.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-bold text-slate-300">Escolha seus números da sorte:</span>
+                        <div className="flex items-center space-x-4 text-xs font-medium">
